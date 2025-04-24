@@ -19,7 +19,7 @@ exports.decorateTab = function (Tab, { React }) {
     }
 
     componentWillMount() {
-      this.setState({ text: this.props.text });
+        this.setState({ text: '' });
     }
 
     componentDidUpdate(prevProps, prevState) {
