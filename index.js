@@ -7,31 +7,45 @@ exports.getTabProps = function (uid, parentProps, props) {
 
 exports.decorateTab = function (Tab, { React }) {
   class SpanWithInput extends React.PureComponent {
-    constructor(props) {
-      super(props);
-      this.state = {
-        text: '',
-      };
-
-      this.changeTabName = this.changeTabName.bind(this);
-      this.onChange = this.onChange.bind(this);
-      this.onKeyPress = this.onKeyPress.bind(this);
+      constructor(props) {
+        super(props);
+        // start with the existing tab label so we don't crash—
+        // the input will still be hidden until you click
+        this.state = {
+            text: props.text || '',
+        };
+        this.changeTabName = this.changeTabName.bind(this);
+        this.onChange = this.onChange.bind(this);
+        this.onKeyPress = this.onKeyPress.bind(this);
     }
 
-    componentWillMount() {
-        this.setState({ text: '' });
-    }
+    // as soon as this tab appears and is active, open the rename input
+    // componentDidMount() {
+    //   if (this.props.isActive) {
+    //     this.changeTabName();
+    //   }
+    // }
+
+    // componentWillMount() {
+    //     this.setState({ text: '' });
+    // }
 
     componentDidUpdate(prevProps, prevState) {
+      // If this tab just became active, show & focus the rename input
+      if (!prevProps.isActive && this.props.isActive) {
+        this.changeTabName();
+      }
+
       const tabNameInput = document.querySelector(`.input${this.props.number}`);
       const tabName = document.querySelector(`.text${this.props.number}`);
 
       if (prevProps.isActive != this.props.isActive) {
-        if (!props.isActive)
+        if (!this.props.isActive) {
           if (tabNameInput) {
             tabNameInput.style.display = 'none';
             tabName.style.display = 'inline';
           }
+        }
       }
     }
 
@@ -40,6 +54,9 @@ exports.decorateTab = function (Tab, { React }) {
       const tabName = document.querySelector(`.text${this.props.number}`);
 
       tabNameInput.style.display = 'inline';
+      tabNameInput.style.caretColor = 'transparent';
+      // Make the caret match the tab’s current text colour
+      // (or replace 'inherit' with '#00ff00' if you always want neon-green)
       setTimeout(() => {
         // set cursor to the end of input
         tabNameInput.focus();
@@ -88,13 +105,13 @@ exports.decorateTab = function (Tab, { React }) {
           name: 'text',
           autoFocus: true,
           contentEditable: true,
-          style: { display: 'none' },
+          style: { display: 'none', caretColor: 'transparent' },
           className: `input${this.props.number} tab_input`,
           value: text.toString(),
           onKeyPress: this.onKeyPress,
           onChange: this.onChange,
           onClick: this.changeTabName,
-          placeholder: 'My tab..',
+          placeholder: '',
         }),
       );
     }
@@ -131,9 +148,29 @@ exports.decorateConfig = function (config) {
           padding: .1em;
           font-size: 1em;
           text-align: center;
+          caret-color: inherit;
         }
         .tab_input:focus{
           outline:none;
+        }
+        .tabs_nav .tab_tab .tab_text {
+         border-right: none !important;
+        }
+        /* Fake neon-green caret that shows only when the input has focus */
+        .tabs_nav .tab_tab .tab_input:focus::after {
+          content: '';
+          position: absolute;
+          right: 4px;              /* tweak if you want it flush against the text */
+          top: 15%;                /* vertically centre inside the tab */
+          bottom: 15%;
+          width: 2px;              /* caret thickness */
+          background: #00ff00;     /* neon green */
+          animation: blink 1s steps(1) infinite;
+        }
+
+        @keyframes blink {
+          0%,50% { opacity: 1; }
+          50.01%,100% { opacity: 0; }
         }
       `,
   });
